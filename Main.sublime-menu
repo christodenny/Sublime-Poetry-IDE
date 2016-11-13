@@ -1,0 +1,18 @@
+[
+{
+    "id" : "poetry",
+    "caption" : "poetry",
+    "command" : "poetry",
+    "children":
+	[
+		{
+			"caption" : "enable",
+			"command" : "enable"
+		},
+		{
+			"caption" : "disable",
+			"command" : "disable"
+		}
+	]
+}
+]
