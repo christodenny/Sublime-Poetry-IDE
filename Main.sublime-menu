@@ -1,16 +1,36 @@
 [
 {
     "id" : "poetry",
-    "caption" : "poetry",
+    "caption" : "Poetry",
     "command" : "poetry",
     "children":
 	[
 		{
-			"caption" : "enable",
-			"command" : "enable"
+			"caption" : "Blank Verse",
+			"command" : "blank_verse"
 		},
 		{
-			"caption" : "disable",
+			"caption" : "English Sonnet",
+			"command" : "english_sonnet"
+		},
+		{
+			"caption" : "Italian Sonnet",
+			"command" : "italian_sonnet"
+		},
+		{
+			"caption" : "Limerick",
+			"command" : "limerick"
+		},
+		{
+			"caption" : "Haiku",
+			"command" : "haiku"
+		},
+		{
+			"caption" : "Pindaric Ode",
+			"command" : "pindaric_ode"
+		},
+		{
+			"caption" : "Disable",
 			"command" : "disable"
 		}
 	]
