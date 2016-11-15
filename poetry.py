@@ -43,16 +43,18 @@ def processText(text):
 
 	return lines
 
-def stressCheck(lines, template_lines, view):
+def stressCheck(lines, template_lines, rhyme_scheme_lines, view):
 	regions = []
+	last_words = []
 	for line, template_line in zip(lines, template_lines):
-		if len(line) is 0: # empty line
+		if len(line) == 0: # empty line
 			continue
 		total_stresses = sum( [ len(word[3]) for word in line ] )
 		if total_stresses < len(template_line):
 			regions.append( ( view.line(view.text_point(line[0][0], 0)), 'tooFewSyllables' ) )
 			continue
 		line_index = 0
+		last = None
 		for r, c, word, stresses in line:
 			if len(stresses) > len(template_line[line_index:]): # too many syllables
 				start_point = view.text_point(r, c)
@@ -69,11 +71,25 @@ def stressCheck(lines, template_lines, view):
 					regions.append( ( sublime.Region(start_point, end_point), 'shouldBeUnstressed' + str(num_syllables) ) )
 
 			line_index += len(stresses)
+			last = (r, c, word)
+
+		# For checking for rhymes
+		last_words.append(last)
 
 	for line in lines[len(template_lines):]: # all extra lines
 		if len(line) is not 0:
 			regions.append( ( view.line(view.text_point(line[0][0], 0)), 'extraLine' ) )
 
+	rhyme_map = {}
+	for last, line in zip(last_words, rhyme_scheme_lines):
+		if line is None:
+			continue
+		if line not in rhyme_map:
+			rhyme_map[line] = set(p.rhymes(last[2]) + [last[2]])
+		elif last[2] not in rhyme_map[line]:
+			start_point = view.text_point(last[0], last[1])
+			end_point = view.text_point(last[0], last[1] + len(last[2]))
+			regions.append( (sublime.Region( start_point, end_point ), 'rhyme') )
 	reasons = set([ reason for _, reason in regions ])
 	collated_regions = [ (reason, [ region[0] for region in regions if region[1] == reason ]) for reason in reasons ]
 	return collated_regions
@@ -87,7 +103,8 @@ flag = 0
 
 def updateThread(view):
 	stressMap = view.settings().get('poem_stress_scheme', False)
-	if not stressMap:
+	rhymeMap = view.settings().get('poem_rhyme_scheme', False)
+	if not stressMap and not rhymeMap:
 		return
 
 	global flag
@@ -105,7 +122,7 @@ def updateThread(view):
 
 	if len(stressMap) is 1:
 		stressMap = [ stressMap[0] ] * len(lines)
-	errorRegions = stressCheck(lines, stressMap, view)
+	errorRegions = stressCheck(lines, stressMap, rhymeMap, view)
 
 	for errorName, regions in errorRegions:
 		view.add_regions(errorName, regions, 'squiggly', "", sublime.DRAW_SQUIGGLY_UNDERLINE|sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE)
@@ -144,6 +161,7 @@ class BlankVerseCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		sublime.active_window().active_view().settings().set('poem_stress_scheme', self.stress_scheme)
+		sublime.active_window().active_view().settings().set('poem_rhyme_scheme', self.rhyme_scheme)
 		updateThread(sublime.active_window().active_view())
 
 class EnglishSonnetCommand(sublime_plugin.TextCommand):
@@ -152,6 +170,7 @@ class EnglishSonnetCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		sublime.active_window().active_view().settings().set('poem_stress_scheme', self.stress_scheme)
+		sublime.active_window().active_view().settings().set('poem_rhyme_scheme', self.rhyme_scheme)
 		updateThread(sublime.active_window().active_view())
 
 class ItalianSonnetCommand(sublime_plugin.TextCommand):
@@ -160,6 +179,7 @@ class ItalianSonnetCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		sublime.active_window().active_view().settings().set('poem_stress_scheme', self.stress_scheme)
+		sublime.active_window().active_view().settings().set('poem_rhyme_scheme', self.rhyme_scheme)
 		updateThread(sublime.active_window().active_view())
 
 class LimerickCommand(sublime_plugin.TextCommand):
@@ -173,6 +193,7 @@ class LimerickCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		sublime.active_window().active_view().settings().set('poem_stress_scheme', self.stress_scheme)
+		sublime.active_window().active_view().settings().set('poem_rhyme_scheme', self.rhyme_scheme)
 		updateThread(sublime.active_window().active_view())
 
 class HaikuCommand(sublime_plugin.TextCommand):
@@ -181,6 +202,7 @@ class HaikuCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		sublime.active_window().active_view().settings().set('poem_stress_scheme', self.stress_scheme)
+		sublime.active_window().active_view().settings().set('poem_rhyme_scheme', self.rhyme_scheme)
 		updateThread(sublime.active_window().active_view())
 
 class PindaricOdeCommand(sublime_plugin.TextCommand):
@@ -189,6 +211,7 @@ class PindaricOdeCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		sublime.active_window().active_view().settings().set('poem_stress_scheme', self.stress_scheme)
+		sublime.active_window().active_view().settings().set('poem_rhyme_scheme', self.rhyme_scheme)
 		updateThread(sublime.active_window().active_view())
 
 class DisableCommand(sublime_plugin.TextCommand):
